@@ -1,0 +1,91 @@
+33/* Importing */
+FILENAME REFFILE '/folders/myfolders/Walmart_Store_sales.csv'; 
+ 
+PROC IMPORT DATAFILE=REFFILE  
+       DBMS=CSV  
+       OUT=WORK.Walmart;  
+       GETNAMES=YES; 
+RUN;
+ 
+/* Muximum sales */
+proc sort data=walmart;
+     by store;
+run;
+
+
+Proc Means Data=Walmart max;
+      Var store weekly_sales;
+      by store;
+Run;
+
+
+/* Standard deviation */
+Proc Means Data=Walmart stddev;
+      Var Weekly_Sales;
+      class store;
+Run;
+
+
+Proc corr Data=Walmart plots=matrix 
+      Plots=Matrix(Histogram);   
+      var weekly_sales store;
+run; 
+
+
+/* Quarterly growth rate */
+
+Proc Means Data=Walmart P75;
+      Var Store Weekly_Sales; 
+      class store;
+Run;
+
+/* Question 4 */
+
+
+Proc Means Data=new_holiday mean;
+      Var Weekly_Sales;
+      class Holiday2;
+Run;
+
+/* data new_holiday; */
+/* set walmart; */
+/* length holiday2 $10.; */
+/* if holiday_flag = 1 then */
+/*    holiday2 = "holiday"; */
+/*    else holiday2 = "non-holiday"; */
+/* run; */
+/*  */
+/* proc  data=walmart; */
+/* informat date ddmmyy10.;  */
+/* format date date9.; */
+/* date= mdy(m,d,y); */
+/* run; */
+
+proc sql;
+ select
+   store, weekly_sales, Qtr(weekly_sales) as max
+   from walmart
+   group by  store
+   between '06Jan2012'd and '10Dec2012'd
+   ;
+run;
+quit;
+ 
+
+
+
+/* Statistical model */
+
+proc contents data=work.walmart;
+run;
+
+proc reg data=work.walmart;
+model CPI unemployment fuel_price=weekly_sales;
+run;
+
+proc arima data=work.walmart;
+  identify var=weekly_sales(1) nlag=24;
+  estimate p=1;
+run;
+
+

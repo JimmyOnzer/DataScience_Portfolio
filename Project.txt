@@ -1,0 +1,68 @@
+/*------------ Importing -------------------------*/
+FILENAME REFFILE '/folders/myfolders/Comcast_telecom_complaints_data.csv';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=CSV
+	OUT=WORK.Comcast_telecom_complaints_data;
+	GETNAMES=YES;
+RUN;
+
+/*-------------- 1 - Histogram -----------------*/
+Proc Sort data=work.Comcast_telecom_complaints_data;
+  By Date;
+Run;
+
+ods graphics / reset width=6.4in height=4.8in imagemap;
+
+proc sgplot data=WORK.Comcast_telecom_complaints_data;
+	histogram Date_month_year / scale=count;
+	yaxis grid;
+run;
+
+ods graphics / reset;
+
+   
+/*------------- 2 - Proc freq for table customer_complaint ------------*/
+
+Proc freq data=Comcast_telecom_complaints_data;
+   tables Customer_Complaint;
+run;
+
+/* ------------3 - If-then-else -------------- */
+
+Data Complaints1;
+        Set Comcast_telecom_complaints_data;
+        length Status1 $8.;
+            if Status="Open" OR Status="Pending" then 
+	           Status1="Open";
+	        else
+	           Status1="Closed";
+run;
+
+
+
+/* -----------4 - bar chart-------------------- */
+ods graphics / reset width=6.3in height=4.8in imagemap;
+
+proc sgplot data=WORK.Complaints1;
+	vbar State / group=Status groupdisplay=stack stat=percent;
+	yaxis grid;
+	keylegend / location=inside;
+run;
+
+ods graphics / reset;
+
+/*--------- 5 - Proc freq for percent------------ */
+
+Proc Sort Data=Complaints1;
+        by Date;
+Run;
+
+     
+Proc Freq Data=Comcast_telecom_complaints_data;
+       Table Received_Via*Status1;
+       
+Run;
+
+    
+	
